@@ -42,7 +42,11 @@ func main() {
 	}
 
 	// notify
-	service.NotifyLocalIP(configData, localIP)
+	err = service.NotifyLocalIP(configData, localIP)
+	if err != nil {
+		fmt.Println("Failed to notify local IP, error:", err.Error())
+		os.Exit(1)
+	}
 }
 
 func loadConfig(configFilePath string) (models.Config, error) {
@@ -55,5 +59,17 @@ func loadConfig(configFilePath string) (models.Config, error) {
 	}
 
 	err = json.Unmarshal(data, &output)
+	if err != nil {
+		return output, err
+	}
+
+	// load env
+	slackToken := os.Getenv("NotifySlackToken")
+	slackChannel := os.Getenv("NotifySlackChannel")
+
+	if slackToken != "" && slackChannel != "" {
+		output.Slack = append(output.Slack, models.ConfigSlack{Token: slackToken, Channel: slackChannel})
+	}
+
 	return output, err
 }
